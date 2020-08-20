@@ -20,6 +20,8 @@ RISK_LEVEL_NUMS = {
     'EXTREME': 4,
 }
 
+cc_profile_id = os.getenv('CC_PROFILE_ID')
+
 
 class CcValidator:
     def __init__(self):
@@ -28,9 +30,12 @@ class CcValidator:
             print('Obtaining required environment variables...')
             self.cc_region = os.environ['CC_REGION'].lower()
 
+            cc_profile_id = os.getenv('CC_PROFILE_ID')
+
             if self.cc_region not in CC_REGIONS:
                 print('\nError: Please ensure "CC_REGION" is set to a region which is supported by Cloud Conformity')
                 sys.exit(1)
+
 
             self.api_key = os.environ['CC_API_KEY']
             self.cfn_template_file_location = os.environ['CFN_TEMPLATE_FILE_LOCATION']
@@ -63,17 +68,33 @@ class CcValidator:
 
         return cfn_contents
 
-    def generate_payload(self):
-        payload = {
-            'data': {
-                'attributes': {
-                    'type': 'cloudformation-template',
-                    'contents': self.cfn_contents
+
+
+    if (cc_profile_id is ""):
+        def generate_payload(self):
+            payload = {
+                'data': {
+                    'attributes': {
+                        'type': 'cloudformation-template',
+                        'contents': self.cfn_contents
+                    }
                 }
             }
-        }
 
-        return payload
+            return payload
+    else:
+        def generate_payload(self):
+            payload = {
+                'data': {
+                    'attributes': {
+                        'type': 'cloudformation-template',
+                        'profileId': cc_profile_id,
+                        'contents': self.cfn_contents
+                    }
+                }
+            }
+        
+            return payload
 
     def run_validation(self, payload):
         cfn_scan_endpoint = f'https://{self.cc_region}-api.cloudconformity.com/v1/iac-scanning/scan'
